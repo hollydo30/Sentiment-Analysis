@@ -24,7 +24,7 @@ def classify_sentiment_with_k_shot(text, k_shot_data):
     predicted_label = "bad" if predicted_label == "LABEL_0" else "good"
 
     # Check the k-shot dataset for similar samples
-    similar_texts = k_shot_data[k_shot_data["text"].str.contains(text[:50], na=False)]
+    similar_texts = k_shot_data[k_shot_data["text"].str.contains(text[:30], na=False)]
     
     if not similar_texts.empty:
         # If a similar example exists in the dataset, use its label instead
@@ -86,18 +86,22 @@ def update_weight(correct_label, model_label):
     """Adjusts weight factor (w) based on correct feedback."""
     global w
     alpha = 0.2  # Learning rate (increase for faster updates)
+    print(w)
 
     # Convert labels to numeric scores
     label_map = {"good": 1, "bad": 0}
     correct_score = label_map[correct_label]
     model_score = label_map[model_label]
+    print(correct_score)
+    print(model_score)
 
     # Adjust weight based on correctness
-    if correct_score > model_score:
-        w += alpha  # Increase trust in "good"
+    if correct_score == model_score:
+        w += alpha  # Decrease trust in model_score
     else:
-        w -= alpha  # Decrease trust in "bad"
+        w -= alpha  # Increase trust in model_score
 
+    print(w)
     # Keep w within [0,1] range
     w = max(0, min(1, w))
 
@@ -111,14 +115,17 @@ def classify_sentiment_with_rl(text, k_shot_data):
     model_label = "bad" if model_prediction[0]['label'] == "LABEL_0" else "good"
 
     # Get k-shot label (if available)
-    similar_texts = k_shot_data[k_shot_data["text"].str.contains(text[:50], na=False)]
+    similar_texts = k_shot_data[k_shot_data["text"].str.contains(text[:30], na=False)]
     k_shot_label = similar_texts["label"].values[0] if not similar_texts.empty else model_label
+    print(model_label)
+    print(k_shot_label)
 
     # Weighted decision-making
     return model_label if w >= 0.5 else k_shot_label
 
+
 # Example usage
-text_sample = "Stock market is rising due to strong earnings."
+text_sample = "Trump to announce up to $500 billion in private sector AI infrastructure investment Start doing due diligence on AI infrastructure stocks. There will be many benefitting from this. (large caps and small caps). AI infrastructure needs to be upgraded, energy grids need to be updated to be able to keep up with artificial intelligence."
 
 # Initial prediction
 print("Initial Prediction:", classify_sentiment_with_rl(text_sample, k_shot_data))
@@ -128,7 +135,6 @@ update_weight("good", "bad")  # Adjust based on correct feedback
 
 # Prediction after RL adjustment
 print("Updated Prediction after RL:", classify_sentiment_with_rl(text_sample, k_shot_data))
-
 
 
 """
@@ -163,7 +169,7 @@ print("Updated Prediction after RL:", classify_sentiment_with_rl(text_sample, k_
 """
 
 
-
+"""
 # Chatbot function (Fixed)
 def chat_with_bot(url):
     summary = analyze_stock_news(url, k_shot_data)  # Pass k_shot_data
@@ -179,4 +185,4 @@ demo = gr.Interface(
 
 # Launch local server
 demo.launch()
-
+"""
